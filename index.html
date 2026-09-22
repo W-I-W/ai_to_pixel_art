@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI → Pixel Art Studio</title>
+<style>
+  :root{
+    --bg:#0b0f17;
+    --panel:#111827;
+    --panel2:#172033;
+    --panel3:#1e293b;
+    --border:#273449;
+    --text:#eef4ff;
+    --muted:#94a3b8;
+    --accent:#8b5cf6;
+    --accent2:#06b6d4;
+    --green:#14b8a6;
+    --shadow:0 18px 55px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;overflow-x:hidden}
+  body{
+    min-height:100vh;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 12% 0%, rgba(139,92,246,.18), transparent 36%),
+      radial-gradient(circle at 90% 10%, rgba(6,182,212,.10), transparent 30%),
+      linear-gradient(180deg,#0b0f17 0%, #09101a 100%);
+  }
+
+  a{color:#8bdcff}
+
+  .app{
+    width:min(1320px, calc(100% - 20px));
+    margin:10px auto 20px;
+  }
+
+  .topbar{
+    display:flex;
+    gap:14px;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:0;
+  }
+
+  .logo{
+    width:48px;height:48px;border-radius:14px;
+    display:grid;place-items:center;
+    font-weight:900;font-size:20px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 12px 30px rgba(139,92,246,.25);
+    flex:0 0 auto;
+  }
+
+  h1{
+    margin:0;
+    line-height:1.1;
+    font-size:clamp(22px, 3vw, 34px);
+  }
+
+  .subtitle{
+    color:var(--muted);
+    font-size:14px;
+    margin-top:4px;
+  }
+
+  .top-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .top-note{
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,.03);
+    color:var(--muted);
+    font-size:12px;
+    white-space:nowrap;
+    flex:0 0 auto;
+  }
+
+  .language-select{
+    min-width:120px;
+    border:1px solid var(--border);
+    background:var(--panel2);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:999px;
+    outline:none;
+    font-size:12px;
+  }
+
+  .layout{
+    display:grid;
+    grid-template-columns:360px minmax(0,1fr);
+    gap:16px;
+    align-items:start;
+  }
+
+  .panel{
+    background:rgba(17,24,39,.94);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    min-width:0;
+  }
+
+  .controls{
+    padding:18px;
+    position:sticky;
+    top:12px;
+  }
+
+  .workspace{
+    padding:18px;
+  }
+
+  .section{
+    padding-bottom:16px;
+    margin-bottom:16px;
+    border-bottom:1px solid var(--border);
+  }
+  .section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+
+  .section-title{
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin-bottom:10px;
+    color:#dce6f8;
+  }
+
+  .dropzone{
+    display:block;
+    width:100%;
+    border:1.5px dashed #44516e;
+    border-radius:16px;
+    padding:18px 14px;
+    text-align:center;
+    cursor:pointer;
+    background:rgba(255,255,255,.02);
+    transition:.18s ease;
+  }
+  .dropzone.drag{
+    transform:translateY(-1px);
+    border-color:var(--accent2);
+    background:rgba(6,182,212,.06);
+  }
+  .dropzone strong{display:block;margin:6px 0 4px}
+  .dropzone span{color:var(--muted);font-size:12px;line-height:1.4}
+  input[type=file]{display:none}
+
+  .presets{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .preset-btn{
+    border:1px solid var(--border);
+    background:var(--panel2);
+    color:var(--text);
+    padding:10px 10px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .control-row{margin:14px 0}
+  .label-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    font-size:13px;
+    margin-bottom:8px;
+    align-items:center;
+  }
+
+  .value{
+    color:#c4b5fd;
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+  }
+
+  input[type=range]{
+    width:100%;
+    accent-color:var(--accent);
+  }
+
+  select{
+    width:100%;
+    border:1px solid var(--border);
+    background:var(--panel2);
+    color:var(--text);
+    padding:11px 12px;
+    border-radius:12px;
+    outline:none;
+  }
+
+  .switch-row{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    align-items:center;
+    margin:12px 0;
+    font-size:13px;
+  }
+
+  .switch{position:relative;width:46px;height:25px;flex:0 0 auto}
+  .switch input{display:none}
+  .switch-ui{
+    position:absolute;inset:0;border-radius:999px;cursor:pointer;
+    background:#374151;transition:.18s;
+  }
+  .switch-ui::before{
+    content:"";position:absolute;left:3px;top:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.18s;
+  }
+  .switch input:checked + .switch-ui{
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+  }
+  .switch input:checked + .switch-ui::before{transform:translateX(21px)}
+
+  .hint{
+    color:var(--muted);
+    font-size:11px;
+    line-height:1.5;
+    margin-top:8px;
+  }
+
+  .btns{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  button{
+    border:none;
+    border-radius:13px;
+    padding:12px 14px;
+    font-weight:800;
+    cursor:pointer;
+    transition:.16s ease;
+  }
+  button:hover{transform:translateY(-1px)}
+  button:active{transform:translateY(0)}
+  button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+  .secondary{
+    background:#243047;
+    color:white;
+    border:1px solid #334155;
+  }
+  .primary{
+    background:linear-gradient(135deg,var(--accent),#6d28d9);
+    color:white;
+  }
+  .export{
+    width:100%;
+    margin-top:10px;
+    background:linear-gradient(135deg,#0ea5e9,var(--green));
+    color:white;
+  }
+
+  .workspace-head{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+
+  .workspace-head b{font-size:14px}
+  .status{font-size:12px;color:var(--muted)}
+
+  .compare{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+
+  .viewer{
+    position:relative;
+    min-width:0;
+    min-height:360px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    background:
+      linear-gradient(45deg,#161b25 25%,transparent 25%) 0 0/24px 24px,
+      linear-gradient(45deg,transparent 75%,#161b25 75%) 0 0/24px 24px,
+      linear-gradient(45deg,transparent 75%,#161b25 75%) 12px -12px/24px 24px,
+      linear-gradient(45deg,#161b25 25%,#0f141d 25%) 12px -12px/24px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .viewer-label{
+    position:absolute;
+    left:10px;top:10px;
+    z-index:2;
+    padding:7px 10px;
+    border-radius:999px;
+    background:rgba(4,7,12,.72);
+    backdrop-filter:blur(8px);
+    font-size:11px;
+    font-weight:800;
+  }
+
+  .viewer-inner{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+
+  canvas{
+    display:block;
+    max-width:100%;
+    max-height:100%;
+    width:auto;
+    height:auto;
+  }
+
+  #pixelCanvas{
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+  }
+
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    line-height:1.6;
+    padding:20px;
+  }
+  .empty .icon{font-size:48px;margin-bottom:4px}
+
+  .palette-wrap{
+    margin-top:14px;
+    border-top:1px solid var(--border);
+    padding-top:14px;
+  }
+
+  .palette-title{
+    font-size:12px;
+    font-weight:800;
+    color:#dbe6fa;
+    margin-bottom:10px;
+  }
+
+  .palette{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+
+  .swatch{
+    width:24px;height:24px;border-radius:7px;
+    border:1px solid rgba(255,255,255,.12);
+  }
+
+  .variant-grid{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0,1fr));
+    gap:10px;
+  }
+
+  .variant-card{
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:rgba(255,255,255,.02);
+    padding:8px;
+    min-width:0;
+  }
+
+  .variant-card canvas{
+    width:100%;
+    height:auto;
+    aspect-ratio:1/1;
+    object-fit:contain;
+    border-radius:10px;
+    background:rgba(255,255,255,.02);
+    image-rendering:pixelated;
+  }
+
+  .variant-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-top:8px;
+  }
+
+  .variant-name{
+    font-size:11px;
+    font-weight:800;
+    color:#dbe6f8;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .use-btn{
+    padding:7px 9px;
+    border-radius:10px;
+    font-size:11px;
+    background:var(--panel3);
+    color:white;
+    border:1px solid var(--border);
+  }
+
+  .variant-note{
+    color:var(--muted);
+    font-size:11px;
+    margin-top:10px;
+  }
+
+  .footer{
+    margin-top:16px;
+    padding:16px 18px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:rgba(17,24,39,.92);
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .author{
+    color:#dbe6fa;
+    font-weight:700;
+  }
+
+  .support-box{
+    max-width:780px;
+    line-height:1.55;
+  }
+
+  @media (max-width: 1180px){
+    .layout{grid-template-columns:1fr}
+    .controls{position:static}
+  }
+
+  @media (max-width: 820px){
+    .compare{grid-template-columns:1fr}
+    .variant-grid{grid-template-columns:repeat(2, minmax(0,1fr))}
+    .viewer{min-height:300px}
+  }
+
+  @media (max-width: 560px){
+    .app{width:calc(100% - 12px);margin:6px auto 14px}
+    .panel{border-radius:16px}
+    .controls,.workspace{padding:14px}
+    .btns{grid-template-columns:1fr}
+    .presets{grid-template-columns:1fr}
+    .variant-grid{grid-template-columns:1fr}
+    .viewer{min-height:250px}
+    .top-note{white-space:normal}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">PX</div>
+      <div>
+        <h1 data-i18n="title">AI → Pixel Art Studio</h1>
+        <div class="subtitle" data-i18n="subtitle">Improved version with edge controls, language switching, and several pixel-art processing modes.</div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <select id="languageSelect" class="language-select">
+        <option value="ru">Русский</option>
+        <option value="en" selected>English</option>
+      </select>
+      <div class="top-note" data-i18n="localNote">Works locally in your browser • no server required</div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="panel controls">
+      <div class="section">
+        <div class="section-title" data-i18n="sectionImage">1. Image</div>
+        <label class="dropzone" id="dropzone" for="fileInput">
+          <div style="font-size:30px">🖼️</div>
+          <strong data-i18n="dropTitle">Drop image here</strong>
+          <span data-i18n="dropText">or click to choose PNG / JPG / WEBP</span>
+        </label>
+        <input id="fileInput" type="file" accept="image/*" />
+      </div>
+
+      <div class="section">
+        <div class="section-title" data-i18n="quickPresets">Quick presets</div>
+        <div class="presets">
+          <button class="preset-btn" data-preset="character" data-i18n="presetCharacter">Character</button>
+          <button class="preset-btn" data-preset="portrait" data-i18n="presetPortrait">Portrait</button>
+          <button class="preset-btn" data-preset="background" data-i18n="presetBackground">Background</button>
+          <button class="preset-btn" data-preset="retro" data-i18n="presetRetro">Retro</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" data-i18n="sectionPixel">2. Pixel Art</div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="processMode">Processing mode</span>
+          </div>
+          <select id="mode"></select>
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="pixelWidth">Pixel width</span>
+            <span class="value" id="widthValue">96 px</span>
+          </div>
+          <input id="pixelWidth" type="range" min="16" max="256" value="96" step="1" />
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="colorCount">Color count</span>
+            <span class="value" id="colorValue">16</span>
+          </div>
+          <input id="colorCount" type="range" min="2" max="32" value="16" step="1" />
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="contrast">Contrast</span>
+            <span class="value" id="contrastValue">0</span>
+          </div>
+          <input id="contrast" type="range" min="-50" max="50" value="0" step="1" />
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="saturation">Saturation</span>
+            <span class="value" id="saturationValue">0</span>
+          </div>
+          <input id="saturation" type="range" min="-100" max="100" value="0" step="1" />
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="edgeStrength">Edge strength</span>
+            <span class="value" id="edgeStrengthValue">0</span>
+          </div>
+          <input id="edgeStrength" type="range" min="0" max="100" value="0" step="1" />
+        </div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="edgeThreshold">Edge threshold</span>
+            <span class="value" id="edgeThresholdValue">28</span>
+          </div>
+          <input id="edgeThreshold" type="range" min="0" max="100" value="28" step="1" />
+        </div>
+
+        <div class="switch-row">
+          <span data-i18n="keepTransparency">Keep transparency</span>
+          <label class="switch">
+            <input id="keepAlpha" type="checkbox" checked />
+            <span class="switch-ui"></span>
+          </label>
+        </div>
+
+        <div class="hint" data-i18n="pixelHint">
+          Game Boy and Retro 16 colors use fixed palettes. Posterize makes stronger RGB simplification. Edge controls help emphasize borders between color transitions.
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" data-i18n="sectionExport">3. Export</div>
+
+        <div class="control-row">
+          <div class="label-row">
+            <span data-i18n="pngScale">PNG scale</span>
+          </div>
+          <select id="scale">
+            <option value="1">x1</option>
+            <option value="2">x2</option>
+            <option value="4" selected>x4</option>
+            <option value="8">x8</option>
+            <option value="12">x12</option>
+          </select>
+        </div>
+
+        <div class="btns">
+          <button class="secondary" id="resetBtn" disabled data-i18n="reset">Reset</button>
+          <button class="primary" id="applyBtn" disabled data-i18n="apply">Process</button>
+        </div>
+        <button class="export" id="downloadBtn" disabled data-i18n="download">Download PNG</button>
+
+        <div class="hint" data-i18n="exportHint">
+          If the image already reads well, try Auto Palette without dithering. For a more retro look, use Game Boy or Retro 16 colors.
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel workspace">
+      <div class="workspace-head">
+        <b data-i18n="preview">Preview</b>
+        <div class="status" id="status">Загрузите изображение</div>
+      </div>
+
+      <div class="compare">
+        <div class="viewer">
+          <div class="viewer-label" data-i18n="originalLabel">ORIGINAL</div>
+          <div class="viewer-inner">
+            <div class="empty" id="originalEmpty">
+              <div class="icon">✨</div>
+              <span data-i18n="originalEmpty">Upload an AI image. It will appear here.</span>
+            </div>
+            <canvas id="originalCanvas" hidden></canvas>
+          </div>
+        </div>
+
+        <div class="viewer">
+          <div class="viewer-label" data-i18n="pixelLabel">PIXEL ART</div>
+          <div class="viewer-inner">
+            <div class="empty" id="pixelEmpty">
+              <div class="icon">👾</div>
+              <span data-i18n="pixelEmpty">After processing, your pixel-art result will appear here.</span>
+            </div>
+            <canvas id="pixelCanvas" hidden></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="palette-title" data-i18n="usedPalette">Used palette</div>
+        <div class="palette" id="palette"></div>
+      </div>
+
+      <div class="palette-wrap">
+        <div class="palette-title" data-i18n="quickVariants">Quick variants</div>
+        <div class="variant-grid" id="variantGrid"></div>
+        <div class="variant-note" data-i18n="variantNote">Click “Use” to copy the selected variant into the main preview.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="author">
+      <span data-i18n="authorLabel">Author:</span> Seitmukhametov Damir
+    </div>
+    <div class="support-box">
+      <span data-i18n="supportText">
+        If you want to support the author and check out more apps, you can take a look here:
+      </span>
+      <a href="https://store.steampowered.com/search/?hwtype=0&developer=Bow%20Pixel&ndl=1" target="_blank" rel="noopener">
+        Bow Pixel on Steam
+      </a>
+    </div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const els = {
+    fileInput: document.getElementById('fileInput'),
+    dropzone: document.getElementById('dropzone'),
+    originalCanvas: document.getElementById('originalCanvas'),
+    pixelCanvas: document.getElementById('pixelCanvas'),
+    originalEmpty: document.getElementById('originalEmpty'),
+    pixelEmpty: document.getElementById('pixelEmpty'),
+    pixelWidth: document.getElementById('pixelWidth'),
+    colorCount: document.getElementById('colorCount'),
+    contrast: document.getElementById('contrast'),
+    saturation: document.getElementById('saturation'),
+    edgeStrength: document.getElementById('edgeStrength'),
+    edgeThreshold: document.getElementById('edgeThreshold'),
+    keepAlpha: document.getElementById('keepAlpha'),
+    mode: document.getElementById('mode'),
+    scale: document.getElementById('scale'),
+    widthValue: document.getElementById('widthValue'),
+    colorValue: document.getElementById('colorValue'),
+    contrastValue: document.getElementById('contrastValue'),
+    saturationValue: document.getElementById('saturationValue'),
+    edgeStrengthValue: document.getElementById('edgeStrengthValue'),
+    edgeThresholdValue: document.getElementById('edgeThresholdValue'),
+    applyBtn: document.getElementById('applyBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    downloadBtn: document.getElementById('downloadBtn'),
+    palette: document.getElementById('palette'),
+    status: document.getElementById('status'),
+    variantGrid: document.getElementById('variantGrid'),
+    languageSelect: document.getElementById('languageSelect'),
+  };
+
+  const I18N = {
+    ru: {
+      title: "AI → Pixel Art Studio",
+      subtitle: "Улучшенная версия с настройкой границ, переключением языка и несколькими режимами обработки в pixel art.",
+      localNote: "Работает локально в браузере • без сервера",
+      sectionImage: "1. Изображение",
+      dropTitle: "Перетащи картинку сюда",
+      dropText: "или нажми для выбора PNG / JPG / WEBP",
+      quickPresets: "Быстрые пресеты",
+      presetCharacter: "Персонаж",
+      presetPortrait: "Портрет",
+      presetBackground: "Фон",
+      presetRetro: "Ретро",
+      sectionPixel: "2. Pixel Art",
+      processMode: "Вариант обработки",
+      pixelWidth: "Ширина в пикселях",
+      colorCount: "Количество цветов",
+      contrast: "Контраст",
+      saturation: "Насыщенность",
+      edgeStrength: "Сила границ",
+      edgeThreshold: "Порог границ",
+      keepTransparency: "Сохранять прозрачность",
+      pixelHint: "Game Boy и Retro 16 colors используют фиксированные палитры. Posterize делает более жёсткое упрощение RGB. Настройки границ помогают выделять переходы между цветами.",
+      sectionExport: "3. Экспорт",
+      pngScale: "Увеличение PNG",
+      reset: "Сбросить",
+      apply: "Обработать",
+      download: "Скачать PNG",
+      exportHint: "Если картинка уже хорошо читается, попробуй Auto Palette без dithering. Для более ретро‑вида — Game Boy или Retro 16 colors.",
+      preview: "Предпросмотр",
+      originalLabel: "ОРИГИНАЛ",
+      pixelLabel: "PIXEL ART",
+      originalEmpty: "Загрузите AI‑картинку. Она появится здесь.",
+      pixelEmpty: "После обработки здесь появится pixel art.",
+      usedPalette: "Используемая палитра",
+      quickVariants: "Быстрые варианты",
+      variantNote: "Нажми «Использовать», чтобы перенести понравившийся вариант в основной предпросмотр.",
+      authorLabel: "Автор:",
+      supportText: "Если хочешь поддержать автора и посмотреть другие приложения, можешь заглянуть сюда:",
+      use: "Использовать",
+      statusUpload: "Загрузите изображение",
+      statusProcessing: "Обработка...",
+      statusReady: (w,h) => `${w} × ${h}`,
+      statusResult: (w,h,c) => `Pixel art: ${w} × ${h} • ${c} цветов`,
+      modes: {
+        auto_fs: "Auto Palette + Floyd–Steinberg",
+        auto_clean: "Auto Palette без dithering",
+        auto_bayer: "Auto Palette + Bayer 4×4",
+        gameboy: "Game Boy palette",
+        retro16: "Retro 16 colors",
+        grayscale: "Grayscale pixel art",
+        posterize: "RGB Posterize"
+      },
+      variants: {
+        auto_fs: "Auto FS",
+        auto_clean: "Auto Clean",
+        auto_bayer: "Auto Bayer",
+        gameboy: "Game Boy"
+      }
+    },
+    en: {
+      title: "AI → Pixel Art Studio",
+      subtitle: "Improved version with edge controls, language switching, and several processing modes for pixel art.",
+      localNote: "Works locally in your browser • no server required",
+      sectionImage: "1. Image",
+      dropTitle: "Drop image here",
+      dropText: "or click to choose PNG / JPG / WEBP",
+      quickPresets: "Quick presets",
+      presetCharacter: "Character",
+      presetPortrait: "Portrait",
+      presetBackground: "Background",
+      presetRetro: "Retro",
+      sectionPixel: "2. Pixel Art",
+      processMode: "Processing mode",
+      pixelWidth: "Pixel width",
+      colorCount: "Color count",
+      contrast: "Contrast",
+      saturation: "Saturation",
+      edgeStrength: "Edge strength",
+      edgeThreshold: "Edge threshold",
+      keepTransparency: "Keep transparency",
+      pixelHint: "Game Boy and Retro 16 colors use fixed palettes. Posterize makes stronger RGB simplification. Edge controls help emphasize borders between color transitions.",
+      sectionExport: "3. Export",
+      pngScale: "PNG scale",
+      reset: "Reset",
+      apply: "Process",
+      download: "Download PNG",
+      exportHint: "If the image already reads well, try Auto Palette without dithering. For a more retro look, use Game Boy or Retro 16 colors.",
+      preview: "Preview",
+      originalLabel: "ORIGINAL",
+      pixelLabel: "PIXEL ART",
+      originalEmpty: "Upload an AI image. It will appear here.",
+      pixelEmpty: "After processing, your pixel-art result will appear here.",
+      usedPalette: "Used palette",
+      quickVariants: "Quick variants",
+      variantNote: "Click “Use” to copy the selected variant into the main preview.",
+      authorLabel: "Author:",
+      supportText: "If you want to support the author and check out more apps, you can take a look here:",
+      use: "Use",
+      statusUpload: "Upload an image",
+      statusProcessing: "Processing...",
+      statusReady: (w,h) => `${w} × ${h}`,
+      statusResult: (w,h,c) => `Pixel art: ${w} × ${h} • ${c} colors`,
+      modes: {
+        auto_fs: "Auto Palette + Floyd–Steinberg",
+        auto_clean: "Auto Palette without dithering",
+        auto_bayer: "Auto Palette + Bayer 4×4",
+        gameboy: "Game Boy palette",
+        retro16: "Retro 16 colors",
+        grayscale: "Grayscale pixel art",
+        posterize: "RGB Posterize"
+      },
+      variants: {
+        auto_fs: "Auto FS",
+        auto_clean: "Auto Clean",
+        auto_bayer: "Auto Bayer",
+        gameboy: "Game Boy"
+      }
+    }
+  };
+
+  const PRESETS = {
+    character: { pixelWidth: 64, colorCount: 16, contrast: 5, saturation: 10, edgeStrength: 18, edgeThreshold: 28, mode: 'auto_fs' },
+    portrait: { pixelWidth: 96, colorCount: 24, contrast: 4, saturation: 14, edgeStrength: 12, edgeThreshold: 34, mode: 'auto_clean' },
+    background: { pixelWidth: 160, colorCount: 24, contrast: 0, saturation: 8, edgeStrength: 8, edgeThreshold: 42, mode: 'auto_bayer' },
+    retro: { pixelWidth: 64, colorCount: 8, contrast: 8, saturation: 0, edgeStrength: 20, edgeThreshold: 24, mode: 'retro16' }
+  };
+
+  const MODES = ['auto_fs','auto_clean','auto_bayer','gameboy','retro16','grayscale','posterize'];
+  const QUICK_VARIANTS = ['auto_fs','auto_clean','auto_bayer','gameboy'];
+
+  const FIXED_PALETTES = {
+    gameboy: [
+      [15, 56, 15],
+      [48, 98, 48],
+      [139, 172, 15],
+      [155, 188, 15]
+    ],
+    retro16: [
+      [0,0,0],[29,43,83],[126,37,83],[0,135,81],
+      [171,82,54],[95,87,79],[194,195,199],[255,241,232],
+      [255,0,77],[255,163,0],[255,236,39],[0,228,54],
+      [41,173,255],[131,118,156],[255,119,168],[255,204,170]
+    ],
+    grayscale: [
+      [12,12,12],[40,40,40],[76,76,76],[110,110,110],
+      [145,145,145],[180,180,180],[215,215,215],[245,245,245]
+    ]
+  };
+
+  let image = null;
+  let fileName = 'pixel-art';
+  let currentPalette = [];
+  let currentLanguage = 'en';
+
+  const clamp = (v) => Math.max(0, Math.min(255, v));
+
+  function t(key){
+    return I18N[currentLanguage][key];
+  }
+
+  function populateModeOptions(){
+    const current = els.mode.value || 'auto_fs';
+    els.mode.innerHTML = '';
+    MODES.forEach(mode => {
+      const option = document.createElement('option');
+      option.value = mode;
+      option.textContent = I18N[currentLanguage].modes[mode];
+      els.mode.appendChild(option);
+    });
+    els.mode.value = current;
+  }
+
+  function applyTranslations(){
+    document.documentElement.lang = currentLanguage;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const value = I18N[currentLanguage][key];
+      if(typeof value === 'string'){
+        el.textContent = value;
+      }
+    });
+    populateModeOptions();
+
+    if (!image) {
+      els.status.textContent = I18N[currentLanguage].statusUpload;
+    } else {
+      els.status.textContent = I18N[currentLanguage].statusReady(image.naturalWidth, image.naturalHeight);
+    }
+
+    renderVariantCards();
+  }
+
+  function updateLabels(){
+    els.widthValue.textContent = `${els.pixelWidth.value} px`;
+    els.colorValue.textContent = `${els.colorCount.value}`;
+    els.contrastValue.textContent = Number(els.contrast.value) > 0 ? `+${els.contrast.value}` : `${els.contrast.value}`;
+    els.saturationValue.textContent = Number(els.saturation.value) > 0 ? `+${els.saturation.value}` : `${els.saturation.value}`;
+    els.edgeStrengthValue.textContent = `${els.edgeStrength.value}`;
+    els.edgeThresholdValue.textContent = `${els.edgeThreshold.value}`;
+  }
+
+  function updateModeUI(){
+    const fixed = ['gameboy','retro16','grayscale'].includes(els.mode.value);
+    els.colorCount.disabled = fixed;
+    els.colorCount.style.opacity = fixed ? '.55' : '1';
+  }
+
+  function readFile(file){
+    if(!file || !file.type.startsWith('image/')) return;
+    fileName = (file.name || 'pixel-art').replace(/\.[^.]+$/, '');
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        image = img;
+        drawOriginal();
+        els.applyBtn.disabled = false;
+        els.resetBtn.disabled = false;
+        els.status.textContent = I18N[currentLanguage].statusReady(img.naturalWidth, img.naturalHeight);
+        processImage();
+        renderVariantCards();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function drawOriginal(){
+    const maxPreview = 1200;
+    const scale = Math.min(1, maxPreview / Math.max(image.naturalWidth, image.naturalHeight));
+    const w = Math.max(1, Math.round(image.naturalWidth * scale));
+    const h = Math.max(1, Math.round(image.naturalHeight * scale));
+
+    els.originalCanvas.width = w;
+    els.originalCanvas.height = h;
+    const ctx = els.originalCanvas.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+    ctx.drawImage(image, 0, 0, w, h);
+    els.originalCanvas.hidden = false;
+    els.originalEmpty.hidden = true;
+  }
+
+  function applyAdjustments(data, contrastValue, saturationValue){
+    const contrast = contrastValue * 2.55;
+    const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+    const sat = 1 + saturationValue / 100;
+
+    for(let i = 0; i < data.length; i += 4){
+      let r = data[i], g = data[i+1], b = data[i+2];
+
+      r = clamp(factor * (r - 128) + 128);
+      g = clamp(factor * (g - 128) + 128);
+      b = clamp(factor * (b - 128) + 128);
+
+      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      r = clamp(gray + (r - gray) * sat);
+      g = clamp(gray + (g - gray) * sat);
+      b = clamp(gray + (b - gray) * sat);
+
+      data[i] = r;
+      data[i+1] = g;
+      data[i+2] = b;
+    }
+  }
+
+  function samplePixels(data, maxSamples = 7000){
+    const samples = [];
+    const count = data.length / 4;
+    const step = Math.max(1, Math.floor(count / maxSamples));
+
+    for(let p = 0; p < count; p += step){
+      const i = p * 4;
+      if(data[i+3] < 20) continue;
+      samples.push([data[i], data[i+1], data[i+2]]);
+    }
+    return samples;
+  }
+
+  function dist2(a, b){
+    const dr = a[0] - b[0], dg = a[1] - b[1], db = a[2] - b[2];
+    return dr*dr + dg*dg + db*db;
+  }
+
+  function luminance(r,g,b){
+    return 0.299*r + 0.587*g + 0.114*b;
+  }
+
+  function buildPaletteKMeans(samples, k, iterations = 9){
+    if(samples.length === 0) return [[0,0,0]];
+    k = Math.max(1, Math.min(k, samples.length));
+
+    const centers = [];
+    centers.push([...samples[Math.floor(samples.length * 0.31)]]);
+
+    while(centers.length < k){
+      let best = samples[0];
+      let bestD = -1;
+      const stride = Math.max(1, Math.floor(samples.length / 2000));
+
+      for(let i = 0; i < samples.length; i += stride){
+        const p = samples[i];
+        let nearest = Infinity;
+        for(const c of centers) nearest = Math.min(nearest, dist2(p, c));
+        if(nearest > bestD){
+          bestD = nearest;
+          best = p;
+        }
+      }
+      centers.push([...best]);
+    }
+
+    for(let iter = 0; iter < iterations; iter++){
+      const sums = Array.from({ length: k }, () => [0,0,0,0]);
+
+      for(const p of samples){
+        let idx = 0, best = Infinity;
+        for(let j = 0; j < k; j++){
+          const d = dist2(p, centers[j]);
+          if(d < best){
+            best = d;
+            idx = j;
+          }
+        }
+        sums[idx][0] += p[0];
+        sums[idx][1] += p[1];
+        sums[idx][2] += p[2];
+        sums[idx][3] += 1;
+      }
+
+      for(let j = 0; j < k; j++){
+        if(sums[j][3] > 0){
+          centers[j] = [
+            Math.round(sums[j][0] / sums[j][3]),
+            Math.round(sums[j][1] / sums[j][3]),
+            Math.round(sums[j][2] / sums[j][3])
+          ];
+        }
+      }
+    }
+
+    return centers;
+  }
+
+  function nearestColor(rgb, palette){
+    let best = palette[0];
+    let bestD = Infinity;
+    for(const c of palette){
+      const d = dist2(rgb, c);
+      if(d < bestD){
+        bestD = d;
+        best = c;
+      }
+    }
+    return best;
+  }
+
+  function applyNearest(imageData, palette, keepAlpha){
+    const data = imageData.data;
+    for(let i = 0; i < data.length; i += 4){
+      if(keepAlpha && data[i+3] < 20) continue;
+      const c = nearestColor([data[i], data[i+1], data[i+2]], palette);
+      data[i] = c[0];
+      data[i+1] = c[1];
+      data[i+2] = c[2];
+      if(!keepAlpha) data[i+3] = 255;
+    }
+  }
+
+  function applyFloydSteinberg(imageData, palette, keepAlpha){
+    const { data, width, height } = imageData;
+    const buf = new Float32Array(data.length);
+    for(let i = 0; i < data.length; i++) buf[i] = data[i];
+
+    const addErr = (x, y, er, eg, eb, factor) => {
+      if(x < 0 || y < 0 || x >= width || y >= height) return;
+      const i = (y * width + x) * 4;
+      if(keepAlpha && buf[i+3] < 20) return;
+      buf[i] += er * factor;
+      buf[i+1] += eg * factor;
+      buf[i+2] += eb * factor;
+    };
+
+    for(let y = 0; y < height; y++){
+      for(let x = 0; x < width; x++){
+        const i = (y * width + x) * 4;
+
+        if(keepAlpha && buf[i+3] < 20){
+          data[i+3] = 0;
+          continue;
+        }
+
+        const old = [clamp(buf[i]), clamp(buf[i+1]), clamp(buf[i+2])];
+        const c = nearestColor(old, palette);
+
+        data[i] = c[0];
+        data[i+1] = c[1];
+        data[i+2] = c[2];
+        data[i+3] = keepAlpha ? Math.round(buf[i+3]) : 255;
+
+        const er = old[0] - c[0], eg = old[1] - c[1], eb = old[2] - c[2];
+
+        addErr(x+1, y, er, eg, eb, 7/16);
+        addErr(x-1, y+1, er, eg, eb, 3/16);
+        addErr(x, y+1, er, eg, eb, 5/16);
+        addErr(x+1, y+1, er, eg, eb, 1/16);
+      }
+    }
+  }
+
+  function applyBayerDither(imageData, palette, keepAlpha){
+    const bayer = [
+      [0, 8, 2, 10],
+      [12, 4, 14, 6],
+      [3, 11, 1, 9],
+      [15, 7, 13, 5]
+    ];
+    const { data, width, height } = imageData;
+
+    for(let y = 0; y < height; y++){
+      for(let x = 0; x < width; x++){
+        const i = (y * width + x) * 4;
+        if(keepAlpha && data[i+3] < 20) continue;
+
+        const t = (bayer[y % 4][x % 4] / 16 - 0.5) * 24;
+        const rgb = [
+          clamp(data[i] + t),
+          clamp(data[i+1] + t),
+          clamp(data[i+2] + t)
+        ];
+        const c = nearestColor(rgb, palette);
+
+        data[i] = c[0];
+        data[i+1] = c[1];
+        data[i+2] = c[2];
+        if(!keepAlpha) data[i+3] = 255;
+      }
+    }
+  }
+
+  function applyPosterize(imageData, levels, keepAlpha){
+    const data = imageData.data;
+    const lv = Math.max(2, Math.min(8, levels));
+    const step = 255 / (lv - 1);
+
+    currentPalette = [];
+    const used = new Set();
+
+    for(let i = 0; i < data.length; i += 4){
+      if(keepAlpha && data[i+3] < 20) continue;
+
+      data[i]   = Math.round(Math.round(data[i]   / step) * step);
+      data[i+1] = Math.round(Math.round(data[i+1] / step) * step);
+      data[i+2] = Math.round(Math.round(data[i+2] / step) * step);
+      if(!keepAlpha) data[i+3] = 255;
+
+      const key = `${data[i]},${data[i+1]},${data[i+2]}`;
+      if(!used.has(key) && currentPalette.length < 32){
+        used.add(key);
+        currentPalette.push([data[i], data[i+1], data[i+2]]);
+      }
+    }
+  }
+
+  function applyEdgeEnhancement(imageData, edgeStrength, edgeThreshold, keepAlpha){
+    if(edgeStrength <= 0) return;
+    const { data, width, height } = imageData;
+    const source = new Uint8ClampedArray(data);
+    const threshold = edgeThreshold * 2.55;
+    const darkenFactor = edgeStrength / 100;
+
+    for(let y = 0; y < height; y++){
+      for(let x = 0; x < width; x++){
+        const i = (y * width + x) * 4;
+        if(keepAlpha && source[i+3] < 20) continue;
+
+        const l0 = luminance(source[i], source[i+1], source[i+2]);
+        let edgeScore = 0;
+
+        if(x + 1 < width){
+          const r = i + 4;
+          edgeScore = Math.max(edgeScore, Math.abs(l0 - luminance(source[r], source[r+1], source[r+2])));
+        }
+        if(y + 1 < height){
+          const b = i + width * 4;
+          edgeScore = Math.max(edgeScore, Math.abs(l0 - luminance(source[b], source[b+1], source[b+2])));
+        }
+        if(x > 0){
+          const l = i - 4;
+          edgeScore = Math.max(edgeScore, Math.abs(l0 - luminance(source[l], source[l+1], source[l+2])));
+        }
+        if(y > 0){
+          const t = i - width * 4;
+          edgeScore = Math.max(edgeScore, Math.abs(l0 - luminance(source[t], source[t+1], source[t+2])));
+        }
+
+        if(edgeScore > threshold){
+          const amount = Math.min(0.65, darkenFactor * (edgeScore / 255));
+          data[i]   = clamp(source[i]   * (1 - amount));
+          data[i+1] = clamp(source[i+1] * (1 - amount));
+          data[i+2] = clamp(source[i+2] * (1 - amount));
+        }
+      }
+    }
+  }
+
+  function renderPalette(palette){
+    els.palette.innerHTML = '';
+    palette.forEach(c => {
+      const sw = document.createElement('div');
+      sw.className = 'swatch';
+      sw.style.background = `rgb(${c[0]},${c[1]},${c[2]})`;
+      sw.title = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+      els.palette.appendChild(sw);
+    });
+  }
+
+  function processWithMode(modeKey, widthOverride = null){
+    const targetW = widthOverride || Number(els.pixelWidth.value);
+    const ratio = image.naturalHeight / image.naturalWidth;
+    const targetH = Math.max(1, Math.round(targetW * ratio));
+
+    const work = document.createElement('canvas');
+    work.width = targetW;
+    work.height = targetH;
+    const ctx = work.getContext('2d', { willReadFrequently: true });
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.clearRect(0,0,targetW,targetH);
+    ctx.drawImage(image, 0, 0, targetW, targetH);
+
+    const imgData = ctx.getImageData(0,0,targetW,targetH);
+    applyAdjustments(imgData.data, Number(els.contrast.value), Number(els.saturation.value));
+
+    const keepAlpha = els.keepAlpha.checked;
+    const colorCount = Number(els.colorCount.value);
+    const edgeStrength = Number(els.edgeStrength.value);
+    const edgeThreshold = Number(els.edgeThreshold.value);
+    const samples = samplePixels(imgData.data);
+    let palette = [];
+
+    if(modeKey === 'gameboy'){
+      palette = FIXED_PALETTES.gameboy.map(c => [...c]);
+      applyNearest(imgData, palette, keepAlpha);
+    } else if(modeKey === 'retro16'){
+      palette = FIXED_PALETTES.retro16.map(c => [...c]);
+      applyNearest(imgData, palette, keepAlpha);
+    } else if(modeKey === 'grayscale'){
+      palette = FIXED_PALETTES.grayscale.map(c => [...c]);
+      applyNearest(imgData, palette, keepAlpha);
+    } else if(modeKey === 'posterize'){
+      applyPosterize(imgData, Math.min(8, Math.max(2, Math.round(colorCount / 4))), keepAlpha);
+      palette = currentPalette.slice();
+    } else {
+      palette = buildPaletteKMeans(samples, colorCount, 9);
+      if(modeKey === 'auto_clean') applyNearest(imgData, palette, keepAlpha);
+      if(modeKey === 'auto_fs') applyFloydSteinberg(imgData, palette, keepAlpha);
+      if(modeKey === 'auto_bayer') applyBayerDither(imgData, palette, keepAlpha);
+    }
+
+    applyEdgeEnhancement(imgData, edgeStrength, edgeThreshold, keepAlpha);
+    ctx.putImageData(imgData, 0, 0);
+
+    return {
+      canvas: work,
+      palette,
+      width: targetW,
+      height: targetH
+    };
+  }
+
+  function processImage(){
+    if(!image) return;
+    els.status.textContent = I18N[currentLanguage].statusProcessing;
+    els.applyBtn.disabled = true;
+
+    requestAnimationFrame(() => {
+      const result = processWithMode(els.mode.value);
+
+      currentPalette = result.palette;
+      els.pixelCanvas.width = result.width;
+      els.pixelCanvas.height = result.height;
+
+      const out = els.pixelCanvas.getContext('2d');
+      out.clearRect(0, 0, result.width, result.height);
+      out.imageSmoothingEnabled = false;
+      out.drawImage(result.canvas, 0, 0);
+
+      els.pixelCanvas.hidden = false;
+      els.pixelEmpty.hidden = true;
+      els.downloadBtn.disabled = false;
+      els.applyBtn.disabled = false;
+      els.status.textContent = I18N[currentLanguage].statusResult(result.width, result.height, currentPalette.length || 'auto');
+      renderPalette(currentPalette);
+    });
+  }
+
+  function renderVariantCards(){
+    els.variantGrid.innerHTML = '';
+    if(!image) return;
+
+    QUICK_VARIANTS.forEach(mode => {
+      const result = processWithMode(mode, 48);
+
+      const card = document.createElement('div');
+      card.className = 'variant-card';
+
+      const c = document.createElement('canvas');
+      c.width = result.width;
+      c.height = result.height;
+      const ctx = c.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(result.canvas, 0, 0);
+
+      const meta = document.createElement('div');
+      meta.className = 'variant-meta';
+
+      const title = document.createElement('div');
+      title.className = 'variant-name';
+      title.textContent = I18N[currentLanguage].variants[mode];
+
+      const useBtn = document.createElement('button');
+      useBtn.className = 'use-btn';
+      useBtn.textContent = I18N[currentLanguage].use;
+      useBtn.addEventListener('click', () => {
+        els.mode.value = mode;
+        updateModeUI();
+        processImage();
+      });
+
+      meta.appendChild(title);
+      meta.appendChild(useBtn);
+      card.appendChild(c);
+      card.appendChild(meta);
+      els.variantGrid.appendChild(card);
+    });
+  }
+
+  function applyPreset(name){
+    const p = PRESETS[name];
+    if(!p) return;
+    els.pixelWidth.value = p.pixelWidth;
+    els.colorCount.value = p.colorCount;
+    els.contrast.value = p.contrast;
+    els.saturation.value = p.saturation;
+    els.edgeStrength.value = p.edgeStrength;
+    els.edgeThreshold.value = p.edgeThreshold;
+    els.mode.value = p.mode;
+    updateLabels();
+    updateModeUI();
+    if(image){
+      processImage();
+      renderVariantCards();
+    }
+  }
+
+  function reset(){
+    els.pixelWidth.value = 96;
+    els.colorCount.value = 16;
+    els.contrast.value = 0;
+    els.saturation.value = 0;
+    els.edgeStrength.value = 0;
+    els.edgeThreshold.value = 28;
+    els.keepAlpha.checked = true;
+    els.mode.value = 'auto_fs';
+    els.scale.value = '4';
+    updateLabels();
+    updateModeUI();
+    if(image){
+      processImage();
+      renderVariantCards();
+    }
+  }
+
+  function downloadPNG(){
+    if(!image || els.pixelCanvas.hidden) return;
+    const scale = Number(els.scale.value);
+    const src = els.pixelCanvas;
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = src.width * scale;
+    exportCanvas.height = src.height * scale;
+    const ctx = exportCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0,0,exportCanvas.width, exportCanvas.height);
+    ctx.drawImage(src, 0, 0, exportCanvas.width, exportCanvas.height);
+
+    const link = document.createElement('a');
+    link.href = exportCanvas.toDataURL('image/png');
+    link.download = `${fileName}-${els.mode.value}-${src.width}x${src.height}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  document.querySelectorAll('[data-preset]').forEach(btn => {
+    btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+  });
+
+  els.fileInput.addEventListener('change', e => readFile(e.target.files[0]));
+
+  ['dragenter', 'dragover'].forEach(type => {
+    els.dropzone.addEventListener(type, e => {
+      e.preventDefault();
+      els.dropzone.classList.add('drag');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(type => {
+    els.dropzone.addEventListener(type, e => {
+      e.preventDefault();
+      els.dropzone.classList.remove('drag');
+    });
+  });
+
+  els.dropzone.addEventListener('drop', e => readFile(e.dataTransfer.files[0]));
+
+  [els.pixelWidth, els.colorCount, els.contrast, els.saturation, els.edgeStrength, els.edgeThreshold].forEach(el => {
+    el.addEventListener('input', updateLabels);
+  });
+
+  [els.pixelWidth, els.colorCount, els.contrast, els.saturation, els.edgeStrength, els.edgeThreshold, els.mode, els.keepAlpha].forEach(el => {
+    el.addEventListener('change', () => {
+      updateModeUI();
+      if(image){
+        processImage();
+        renderVariantCards();
+      }
+    });
+  });
+
+  els.languageSelect.addEventListener('change', () => {
+    currentLanguage = els.languageSelect.value;
+    applyTranslations();
+    updateLabels();
+    if(image){
+      processImage();
+    }
+  });
+
+  els.applyBtn.addEventListener('click', () => {
+    processImage();
+    renderVariantCards();
+  });
+  els.resetBtn.addEventListener('click', reset);
+  els.downloadBtn.addEventListener('click', downloadPNG);
+
+  currentLanguage = 'en';
+  els.languageSelect.value = 'en';
+  updateLabels();
+  populateModeOptions();
+  updateModeUI();
+  applyTranslations();
+})();
+</script>
+</body>
+</html>
